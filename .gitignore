@@ -1,0 +1,15 @@
+# Environment
+.env
+
+# Data directory — contains DB, logs, session cookies, debug snapshots
+data/
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# macOS
+.DS_Store
