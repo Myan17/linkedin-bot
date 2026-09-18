@@ -1,5 +1,7 @@
 # LinkedIn Outreach Bot
 
+[![CI](https://github.com/Myan17/linkedin-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/Myan17/linkedin-bot/actions/workflows/ci.yml)
+
 Automates personalized LinkedIn outreach to recent connections using Playwright. Filters out University of Minnesota students, sends templated initial messages, and schedules follow-ups.
 
 ## How it works
@@ -10,6 +12,41 @@ Automates personalized LinkedIn outreach to recent connections using Playwright.
 4. **Follows up** automatically 7 days later (adjusted for weekends)
 
 All state is stored in a local SQLite database (`data/connections.db`).
+
+## Security and scope
+
+- **Credentials never touch disk.** They are read with `getpass` (no terminal
+  echo) and stored only in the macOS Keychain via `keyring`. `.env` holds
+  profile text, not secrets. `data/` — the SQLite DB and the browser session
+  cookies — is gitignored. Tests assert that saving credentials writes nothing
+  to the working directory and never prints the password.
+- **Missing credentials fail closed** with the command that fixes them, rather
+  than attempting a login with `None`.
+- **Rate-limited by design:** capped messages per run and a randomized 45–90 s
+  delay between sends, configurable in `.env`.
+- CI runs a **gitleaks** scan over full history on every push.
+- **This is a local tool and is deliberately not deployed.** LinkedIn's User
+  Agreement prohibits automated access, so running it at all carries account
+  risk. It exists as an engineering exercise in browser automation, state
+  management and scheduling — not as a hosted service.
+
+## Testing
+
+```bash
+pip install -r requirements.txt pytest
+pytest tests -q
+```
+
+97 tests, 72% coverage, gated at 65% in CI. No test launches a browser or
+contacts LinkedIn — Playwright pages are stubbed.
+
+| Suite | Covers |
+|---|---|
+| `test_linkedin.py` | connection scraping, UMN education filter, message sending, selector fallbacks |
+| `test_database.py` | connection state, dedup, follow-up bookkeeping |
+| `test_scheduler.py` | 7-day follow-up with weekend adjustment |
+| `test_templates.py` | message rendering from `.env` profile fields |
+| `test_credentials.py` | keychain-only storage, `getpass` for the password, no stdout leak, fail-closed getters, idempotent delete |
 
 ## Prerequisites
 
